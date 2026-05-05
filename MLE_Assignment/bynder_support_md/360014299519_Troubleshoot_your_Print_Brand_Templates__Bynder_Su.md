@@ -1,0 +1,37 @@
+# Troubleshoot your Print Brand Templates – Bynder Support
+
+**Source URL:** https://support.bynder.com/hc/en-us/articles/360014299519-Troubleshoot-your-Print-Brand-Templates
+
+It might have happened that when you upload your InDesign package to Bynder, the Print Brand Template does not look or behave as required.
+
+Refer to the information below to see what might have gone wrong.
+
+| **Problem** | **Solution** |
+| --- | --- |
+| I cannot edit fields or images in the template. | For fields or images to be editable, they need to have a script label. Open your IMDL file in your package. Click ![arrow-indesign.png](https://support.bynder.com/hc/article_attachments/10089974101522) and click the element that should be editable. Go to Window > Utilities > Script Label and see if there is text in the script label window. If not, add it. See point 6 of the Checklist in [Prepare your InDesign package](https://support.bynder.com/hc/articles/360013873220#UUID-6b82abdf-e550-6fd8-b1d7-44b02796b199 "Prepare your InDesign package`")<br>. |
+| My paragraphs show funny styling.<br><br>![Paragraph-comes-out-funny.png](https://support.bynder.com/hc/article_attachments/10089933521298) | It might be that paragraph styles are missing. Open your IMDL file in your package. Click ![arrow-indesign.png](https://support.bynder.com/hc/article_attachments/10089974101522) and click the paragraph. Open Window > Styles > Paragraph Styles. Make sure that the paragraph has a style and is not defines as \[Basic Paragraph\] or \[Basic Paragraph\]+. To define a style, see point 2 of the Checklist in [Prepare your InDesign package](https://support.bynder.com/hc/articles/360013873220#UUID-6b82abdf-e550-6fd8-b1d7-44b02796b199 "Prepare your InDesign package`")<br>.<br><br>Additionally, make sure that the text is aligned from the top and that there is no padding or spacing above or below the text. |
+| When printed, the picture does not touch the edge of the page.<br><br>![Picture-does-not-touch-edge-of-page.png](https://support.bynder.com/hc/article_attachments/10089933588626) | To make sure images or shapes touch the edge of the page, bleed needs to be added to them (they need to run over the edge of the page). Select the image and drag it over the edge of the page. |
+| Colors in paragraphs are broken. | Lines of text that have different colors need to be in separate paragraphs and need to have separate paragraph styles. Alternatively, if you want to keep them in one paragraph, define different character styles for them. To define a style, see point 2 of the Checklist in [Prepare your InDesign package](https://support.bynder.com/hc/articles/360013873220#UUID-6b82abdf-e550-6fd8-b1d7-44b02796b199 "Prepare your InDesign package`")<br>. |
+| When I change the image in the template, the new image looks distorted or is partially missing in the generated pdf.<br><br>![distorted-image.png](https://support.bynder.com/hc/article_attachments/10089974222994) | It might be because the image in the InDesign file has been rotated. |
+| My uploader has crashed.<br><br>![crashed-uploader.png](https://support.bynder.com/hc/article_attachments/10089933663506) | It might be because you have elements on a Master page in your InDesign file. You can have a Master page but you cannot have elements on it.<br><br>![master-page.png](https://support.bynder.com/hc/article_attachments/10089933694482)<br><br>Other possible causes might be the following:<br><br>*   The template has a table in it.<br>    <br>*   There are two script labels that are the same.<br>    <br><br>If you cannot determine the cause, contact your Customer Success Contact. |
+| The image is cropped differently in the editor and the pdf. | Check if Fitting is enabled for this image in the InDesign file. Click on the image in the InDesign file and go to Object > Fitting. Select Fit Content to Frame. |
+| My text box is missing background color or the color is misplaced. | Check if the background is not a part of the text box in InDesign. For background color to show correctly, it needs to be a separate element (a rectangle not another text box) that you create on top of the text box and then send to back. See the Text boxes section in [Prepare your InDesign package](https://support.bynder.com/hc/articles/360013873220#UUID-6b82abdf-e550-6fd8-b1d7-44b02796b199 "Prepare your InDesign package`")<br>. |
+| My images are broken. | It might be because you used special characters or spaces in image names.<br><br>Other causes might be that the image is missing from the Links folder, or you assigned a script label to a shape (in which case replace the shape with an image from the Links folder). |
+| I have added a placeholder for an image and it's not showing in the template.<br><br>![image-missing.png](https://support.bynder.com/hc/article_attachments/10089933731730) | It might be because you used a shape as the placeholder. Every image needs to be represented in the Links folder, so if there is nothing there, the image will not show. |
+| My text shows as one line where it should be two lines. | Maybe you have use line breaks (Shift+Enter) instead of separate paragraphs in your InDesign file.<br><br>![wrong-line-break.png](https://support.bynder.com/hc/article_attachments/10089974401682) |
+| An element does not show in the template. | It might be that a layer or an element has been hidden or ![lock-element.png](https://support.bynder.com/hc/article_attachments/10089974447122) locked. Make sure that all layers and elements are visible and not locked.<br><br>![visible-element.png](https://support.bynder.com/hc/article_attachments/10089933859090) |
+| I have my text in columns and they show funny on my template. | Make sure that every column needs to be a separate text box. Also these text boxes cannot be linked. If the text boxes are linked, if you type something in the first box, the text should automatically be pushed to the next box. |
+| My text is misplaced. | It might happen because you have used padding or inset spacing (Object > Text Frame Objects) in your text box in the InDesign file. Make sure that those options are not used. |
+| My text box is not aligned. | ![image-20250422-101451.png](https://support.bynder.com/hc/article_attachments/26729574125586)<br><br>Text boxes must have space at the end. |
+| I'm trying to set crop marks on my template and cannot do it. | Crops marks need to be set in your InDesign file. |
+| I have an editable image in my template that has a shaped edge. But it displays as a rectangle when I edit the image. | If you want your editable image to have shaped edge, place a shaped element on the image. for example, if you want an image to have a cut corner, place a rectangle on the corner to hide it. |
+| I have uploaded my InDesign file and all the text fields on my template are in wrong places. | This might happen because of multiple reasons. Have a look at the text fields in the original InDesign file and see if they are not overlapping or if they have script labels entered correctly. |
+
+Learn more[](https://support.bynder.com/hc/en-us/articles/360014299519-Troubleshoot-your-Print-Brand-Templates#h_01JKSY2ZSV7CW8E8VAQH0SX3NV)
+
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+*   [Prepare your InDesign package](https://support.bynder.com/hc/articles/360013873220#UUID-6b82abdf-e550-6fd8-b1d7-44b02796b199 "Prepare your InDesign package`")
+    
+
+Share
