@@ -5,21 +5,39 @@ import re
 from langchain.text_splitter import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from tqdm import tqdm
+import argparse
+from dotenv import load_dotenv
 
+from config import (
+    ARTICLES_DIR,
+    VECTOR_STORE_DIR,
+    COLLECTION_NAME,
+    EMBEDDING_MODEL,
+    CHUNK_SIZE,
+    CHUNK_OVERLAP,
+)
 
 
 logger = logging.getLogger(__name__)
 
 class IngestPipeline:
-    def __init__(self, src_path, dest_path, collection_name, embedding_model):
+    def __init__(
+        self,
+        src_path=ARTICLES_DIR,
+        dest_path=VECTOR_STORE_DIR,
+        collection_name=COLLECTION_NAME,
+        embedding_model=EMBEDDING_MODEL,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
+    ):
         self.src_path = src_path
         self.dest_path = dest_path
         self.collection_name = collection_name
         self.embedding_model = embedding_model
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
         self.client = chromadb.PersistentClient(path=self.dest_path)
         self.BATCH_SIZE = 100
-        self.CHUNK_SIZE = 600 # TODO: Do these based on data from the docs
-        self.CHUNK_OVERLAP = 100
 
     def run(self, force=False):
         # Delete collection if it already exists and force is True
@@ -27,7 +45,6 @@ class IngestPipeline:
             logger.info(f"Force is True. Deleting collection '{self.collection_name}' if it exists.")
             self.client.delete_collection(self.collection_name)
         
-        self.collection = self.client.create_collection(self.collection_name)
         
         # Embedding funciton
         embedding_fn = OpenAIEmbeddingFunction(
@@ -39,6 +56,7 @@ class IngestPipeline:
         collection = self.client.get_or_create_collection(
             name=self.collection_name,
             embedding_function=embedding_fn,
+            metadata={"hnsw:space": "cosine"},
         )
         
         # TODO: ingest files that are not present in the collection
@@ -85,7 +103,7 @@ class IngestPipeline:
     def _chunk_file(self, article: dict) -> list[dict]:
         headers_to_split_on = [("#", "h1"), ("##", "h2"), ("###", "h3")]
         md_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
-        char_splitter = RecursiveCharacterTextSplitter(chunk_size=self.CHUNK_SIZE, chunk_overlap=self.CHUNK_OVERLAP)
+        char_splitter = RecursiveCharacterTextSplitter(chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
 
         md_chunks = md_splitter.split_text(article["content"])
         final_chunks = char_splitter.split_documents(md_chunks)
@@ -112,3 +130,14 @@ class IngestPipeline:
             })
 
         return chunks
+
+
+if __name__ == "__main__":
+    load_dotenv()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--force", action="store_true", help="Rebuild index from scratch")
+    args = parser.parse_args()
+
+    pipeline = IngestPipeline()
+    pipeline.run(force=args.force)
