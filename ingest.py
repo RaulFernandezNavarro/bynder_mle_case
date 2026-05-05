@@ -2,9 +2,10 @@ import chromadb
 import os
 import logging
 import re
-from langchain.text_splitter import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
+from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 import argparse
 from dotenv import load_dotenv
 
@@ -70,11 +71,12 @@ class IngestPipeline:
             chunks.extend(self._chunk_file(file))
         
         logger.info(f"Ingesting {len(chunks)} chunks into collection '{self.collection_name}'.")
-        for batch_start in tqdm(range(0, len(chunks), self.BATCH_SIZE)):
-            batch = chunks[batch_start:batch_start + self.BATCH_SIZE]
-            ids=[f"{chunk['file_id']}_{batch_start + batch_index}" for batch_index, chunk in enumerate(batch)]
-            documents=[chunk["text"] for chunk in batch]
-            metadatas=[
+        with logging_redirect_tqdm():
+            for batch_start in tqdm(range(0, len(chunks), self.BATCH_SIZE)):
+                batch = chunks[batch_start:batch_start + self.BATCH_SIZE]
+                ids = [f"{chunk['file_id']}_{batch_start + batch_index}" for batch_index, chunk in enumerate(batch)]
+                documents = [chunk["text"] for chunk in batch]
+                metadatas = [
                     {
                         "file_id": chunk["file_id"],
                         "title": chunk["title"],
@@ -83,7 +85,7 @@ class IngestPipeline:
                     }
                     for chunk in batch
                 ]
-            collection.add(ids=ids, documents=documents, metadatas=metadatas)
+                collection.add(ids=ids, documents=documents, metadatas=metadatas)
 
         logger.info("Ingestion completed.")
 
@@ -133,6 +135,7 @@ class IngestPipeline:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     load_dotenv()
 
     parser = argparse.ArgumentParser()
