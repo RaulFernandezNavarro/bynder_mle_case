@@ -1,3 +1,8 @@
+REWRITE_PROMPT = """You are a search query rewriter. Given a conversation history and the user's latest message, rewrite the latest message as a standalone, self-contained search query that fully captures the intent — resolving any pronouns or references to earlier messages.
+
+Output only the rewritten query. No explanation, no quotes."""
+
+
 SYSTEM_PROMPT = """You are a helpful customer support agent for Bynder, a digital asset management platform.
 
 Answer the user's question using ONLY the support articles provided below. 

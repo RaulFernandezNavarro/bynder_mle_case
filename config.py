@@ -9,13 +9,14 @@ COLLECTION_NAME = "bynder_support"
 
 # Models
 EMBEDDING_MODEL = "text-embedding-3-small"
+REWRITE_MODEL = "gpt-4.1-nano"
 LLM_MODEL = "gpt-4.1-mini"
 
 # Chunking
-CHUNK_SIZE = 600
-CHUNK_OVERLAP = 100
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 200
 CHUNK_SCORE_THRESHOLD = 0.35
 
 # Retrieval
 TOP_K = 5
-MAX_CHUNKS_PER_ARTICLE = 2
+MAX_CHUNKS_PER_ARTICLE = 3

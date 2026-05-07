@@ -18,3 +18,5 @@ Valid levels: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`.
 - multi modal ? screenshot of the issue
 - model switching based on similarity from query and retrieved from rag (similar = easy = dumb model, not similar = hard = smart model)
 - imporove the citing logic, weak letting to the model decide
+
+- tradeoff of more tokens vs more calls
