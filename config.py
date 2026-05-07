@@ -14,6 +14,7 @@ LLM_MODEL = "gpt-4.1-mini"
 # Chunking
 CHUNK_SIZE = 600
 CHUNK_OVERLAP = 100
+CHUNK_SCORE_THRESHOLD = 0.35
 
 # Retrieval
 TOP_K = 5

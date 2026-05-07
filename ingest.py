@@ -8,6 +8,7 @@ from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 import argparse
 from dotenv import load_dotenv
+from logging_config import setup_logging
 
 from config import (
     ARTICLES_DIR,
@@ -135,8 +136,8 @@ class IngestPipeline:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     load_dotenv()
+    setup_logging()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--force", action="store_true", help="Rebuild index from scratch")
