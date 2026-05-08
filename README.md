@@ -13,8 +13,8 @@ User Question
      |--- decides to search ---> search_knowledge_base(query)
      |                                    |
      |                                    v
-     |                           ChromaDB vector store
-     |                           (text-embedding-3-small)
+     |                           Hybrid search
+     |                           (semantic + BM25, fused with RRF)
      |                                    |
      |<--- retrieved articles -----------/
      |
@@ -47,8 +47,9 @@ Each chunk is prefixed with `Title > Section` to enrich the embedding with struc
 
 ### Retrieval Design
 
-- Fetches 3x candidates, then deduplicates by article (max 3 chunks per article) to ensure source diversity
-- Score threshold (0.35) filters low-relevance noise
+- **Hybrid search**: runs both semantic (ChromaDB cosine) and keyword (BM25) search in parallel, then fuses results with Reciprocal Rank Fusion (RRF, k=60). Semantic search catches paraphrases and conceptual matches; BM25 catches exact terms the embedding might miss (e.g., "OAuth2", "DAT Presets")
+- Fetches 3x candidates per method, then deduplicates by article (max 3 chunks per article) to ensure source diversity
+- Score threshold (0.35) filters low-relevance noise from the semantic side
 - Content based chunk IDs (hash of file_id + section + text) for idempotent re ingestion
 
 ## Setup
@@ -102,7 +103,6 @@ The script runs each question through the agent, displays tool calls and answers
 
 ## What I'd Improve with More Time
 
-- **Hybrid search**: combine semantic search with BM25/keyword search for better recall on exact terms
 - **Reranking**: add a cross-encoder reranker after initial retrieval for more precise context
 - **Adaptive model routing**: use a cheaper model for simple lookups, stronger model for complex synthesis
 - **LLM-as-judge evaluation**: automated answer quality scoring beyond keyword matching
