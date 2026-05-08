@@ -46,6 +46,7 @@ class ToolCallEvent:
     name: str
     arguments: dict
     result: str
+    chunks: list[dict]
 
 
 @dataclass
@@ -153,6 +154,7 @@ async def run_agent(
                 name=tc["name"],
                 arguments=args,
                 result=_format_chunks_summary(chunks),
+                chunks=chunks,
             )
 
             messages.append({

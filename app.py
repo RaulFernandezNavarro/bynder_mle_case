@@ -27,6 +27,7 @@ async def on_message(message: cl.Message):
     response = cl.Message(content="")
     response_sent = False
     full_response = ""
+    sources: dict[str, str] = {}
 
     try:
         async for event in run_agent(message.content, history):
@@ -34,6 +35,9 @@ async def on_message(message: cl.Message):
                 async with cl.Step(name=f"Searching: {event.arguments.get('query', '')}", type="tool") as step:
                     step.input = event.arguments.get("query", "")
                     step.output = event.result
+                for chunk in event.chunks:
+                    if chunk["source_url"]:
+                        sources[chunk["title"]] = chunk["source_url"]
             elif isinstance(event, TokenEvent):
                 if not response_sent:
                     await response.send()
@@ -46,6 +50,12 @@ async def on_message(message: cl.Message):
         if not response_sent:
             await response.send()
         await response.stream_token(full_response)
+
+    if sources:
+        citations = "\n".join(f"- [{title}]({url})" for title, url in sources.items())
+        source_section = f"\n\n**Sources:**\n{citations}"
+        await response.stream_token(source_section)
+        full_response += source_section
 
     await response.update()
 
