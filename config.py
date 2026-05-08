@@ -9,7 +9,6 @@ COLLECTION_NAME = "bynder_support"
 
 # Models
 EMBEDDING_MODEL = "text-embedding-3-small"
-REWRITE_MODEL = "gpt-4.1-nano"
 LLM_MODEL = "gpt-4.1-mini"
 
 # Chunking

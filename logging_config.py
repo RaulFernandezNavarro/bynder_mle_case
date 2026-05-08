@@ -1,11 +1,11 @@
 import logging
 import os
 
-PROJECT_LOGGERS = ("__main__", "app", "agent", "retriever", "ingest", "indexer")
+PROJECT_LOGGERS = ("__main__", "app", "agent", "retriever", "ingest")
 
 
 def setup_logging(level: str | None = None) -> None:
-    raw_level = (level or os.getenv("LOG_LEVEL", "DEBUG")).upper()
+    raw_level = (level or os.getenv("LOG_LEVEL", "INFO")).upper()
     app_level = getattr(logging, raw_level, None)
     if not isinstance(app_level, int):
         raise ValueError(

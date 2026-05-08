@@ -8,7 +8,7 @@ from logging_config import setup_logging
 load_dotenv()
 setup_logging()
 
-from agent import retrieve, rewrite_query, stream_answer
+from agent import TokenEvent, ToolCallEvent, run_agent
 
 logger = logging.getLogger(__name__)
 
@@ -24,29 +24,28 @@ async def on_message(message: cl.Message):
     logger.info("Received user message")
     history = cl.user_session.get("history")
 
-    async with cl.Step(name="Query rewrite", type="llm") as step:
-        search_query = await rewrite_query(message.content, history)
-        step.input = message.content
-        step.output = search_query
-
-    async with cl.Step(name="Retrieval") as step:
-        chunks = retrieve(search_query)
-        step.input = search_query
-        step.output = (
-            "\n\n".join(
-                f"[{c['title']}] (score: {c['score']})\n{c['source_url']}"
-                for c in chunks
-            )
-            or "No chunks retrieved."
-        )
-
     response = cl.Message(content="")
-    await response.send()
-
+    response_sent = False
     full_response = ""
-    async for token in stream_answer(message.content, chunks, history):
-        await response.stream_token(token)
-        full_response += token
+
+    try:
+        async for event in run_agent(message.content, history):
+            if isinstance(event, ToolCallEvent):
+                async with cl.Step(name=f"Searching: {event.arguments.get('query', '')}", type="tool") as step:
+                    step.input = event.arguments.get("query", "")
+                    step.output = event.result
+            elif isinstance(event, TokenEvent):
+                if not response_sent:
+                    await response.send()
+                    response_sent = True
+                await response.stream_token(event.token)
+                full_response += event.token
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=True)
+        full_response = "Something went wrong. Please try again or start a new chat."
+        if not response_sent:
+            await response.send()
+        await response.stream_token(full_response)
 
     await response.update()
 
