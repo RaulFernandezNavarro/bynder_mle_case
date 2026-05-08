@@ -1,9 +1,11 @@
-import os
 import logging
+import os
+
 from openai import AsyncOpenAI
-from retriever import Retriever
-from prompts import SYSTEM_PROMPT, REWRITE_PROMPT
+
 from config import LLM_MODEL, REWRITE_MODEL
+from prompts import REWRITE_PROMPT, SYSTEM_PROMPT
+from retriever import Retriever
 
 logger = logging.getLogger(__name__)
 client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
@@ -56,9 +58,15 @@ def retrieve(search_query: str) -> list[dict]:
 async def stream_answer(query: str, chunks: list[dict], history: list[dict]):
     context = build_context(chunks) if chunks else ""
     system = SYSTEM_PROMPT.format(context=context)
-    messages = [{"role": "system", "content": system}, *history, {"role": "user", "content": query}]
+    messages = [
+        {"role": "system", "content": system},
+        *history,
+        {"role": "user", "content": query},
+    ]
 
-    stream = await client.chat.completions.create(model=LLM_MODEL, messages=messages, stream=True)
+    stream = await client.chat.completions.create(
+        model=LLM_MODEL, messages=messages, stream=True
+    )
     async for chunk in stream:
         delta = chunk.choices[0].delta.content
         if delta:

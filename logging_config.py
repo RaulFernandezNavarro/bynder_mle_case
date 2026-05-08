@@ -1,7 +1,6 @@
 import logging
 import os
 
-
 PROJECT_LOGGERS = ("__main__", "app", "agent", "retriever", "ingest", "indexer")
 
 
@@ -9,7 +8,9 @@ def setup_logging(level: str | None = None) -> None:
     raw_level = (level or os.getenv("LOG_LEVEL", "DEBUG")).upper()
     app_level = getattr(logging, raw_level, None)
     if not isinstance(app_level, int):
-        raise ValueError(f"Invalid LOG_LEVEL '{raw_level}'. Use DEBUG, INFO, WARNING, ERROR, or CRITICAL.")
+        raise ValueError(
+            f"Invalid LOG_LEVEL '{raw_level}'. Use DEBUG, INFO, WARNING, ERROR, or CRITICAL."
+        )
 
     fmt = "%(asctime)s %(levelname)s [%(name)s] %(message)s"
 

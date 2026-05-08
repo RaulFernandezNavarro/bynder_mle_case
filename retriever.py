@@ -1,10 +1,17 @@
-import os
 import logging
+import os
+
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 
-from config import CHUNK_SCORE_THRESHOLD, VECTOR_STORE_DIR, COLLECTION_NAME, EMBEDDING_MODEL, TOP_K, MAX_CHUNKS_PER_ARTICLE
-
+from config import (
+    CHUNK_SCORE_THRESHOLD,
+    COLLECTION_NAME,
+    EMBEDDING_MODEL,
+    MAX_CHUNKS_PER_ARTICLE,
+    TOP_K,
+    VECTOR_STORE_DIR,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,18 +57,20 @@ class Retriever:
             if count >= self.max_chunks_per_article:
                 continue
             seen_titles[title] = count + 1
-            chunks.append({
-                "text": doc,
-                "title": title,
-                "source_url": metadata["source_url"],
-                "section": metadata["section"],
-                "score": round(1 - distance, 4),
-            })
+            chunks.append(
+                {
+                    "text": doc,
+                    "title": title,
+                    "source_url": metadata["source_url"],
+                    "section": metadata["section"],
+                    "score": round(1 - distance, 4),
+                }
+            )
             if len(chunks) == self.top_k:
                 break
-        
+
         # Delete chunks with less than X score
         chunks = [chunk for chunk in chunks if chunk["score"] >= CHUNK_SCORE_THRESHOLD]
         logger.debug(f"Retrieving the following chunks for query '{query}': {chunks}")
-        
+
         return chunks

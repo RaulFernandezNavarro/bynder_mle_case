@@ -1,26 +1,30 @@
-import chromadb
-import os
+import argparse
 import logging
+import os
 import re
-from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
+
+import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+from dotenv import load_dotenv
+from langchain_text_splitters import (
+    MarkdownHeaderTextSplitter,
+    RecursiveCharacterTextSplitter,
+)
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
-import argparse
-from dotenv import load_dotenv
-from logging_config import setup_logging
 
 from config import (
     ARTICLES_DIR,
-    VECTOR_STORE_DIR,
+    CHUNK_OVERLAP,
+    CHUNK_SIZE,
     COLLECTION_NAME,
     EMBEDDING_MODEL,
-    CHUNK_SIZE,
-    CHUNK_OVERLAP,
+    VECTOR_STORE_DIR,
 )
-
+from logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
+
 
 class IngestPipeline:
     def __init__(
@@ -44,38 +48,44 @@ class IngestPipeline:
     def run(self, force=False):
         # Delete collection if it already exists and force is True
         if force:
-            logger.info(f"Force is True. Deleting collection '{self.collection_name}' if it exists.")
+            logger.info(
+                f"Force is True. Deleting collection '{self.collection_name}' if it exists."
+            )
             self.client.delete_collection(self.collection_name)
-        
-        
+
         # Embedding funciton
         embedding_fn = OpenAIEmbeddingFunction(
             api_key=os.environ["OPENAI_API_KEY"],
             model_name=self.embedding_model,
         )
         logger.info(f"Using embedding model: {self.embedding_model}")
-        
+
         collection = self.client.get_or_create_collection(
             name=self.collection_name,
             embedding_function=embedding_fn,
             metadata={"hnsw:space": "cosine"},
         )
-        
+
         # TODO: ingest files that are not present in the collection
         file_paths = list(self.src_path.glob("*.md"))
         logger.info(f"Found {len(file_paths)} files to ingest.")
-        
+
         chunks = []
         for path in file_paths:
             logger.debug(f"Processing file: {path}")
             file = self._parse_file(path)
             chunks.extend(self._chunk_file(file))
-        
-        logger.info(f"Ingesting {len(chunks)} chunks into collection '{self.collection_name}'.")
+
+        logger.info(
+            f"Ingesting {len(chunks)} chunks into collection '{self.collection_name}'."
+        )
         with logging_redirect_tqdm():
             for batch_start in tqdm(range(0, len(chunks), self.BATCH_SIZE)):
-                batch = chunks[batch_start:batch_start + self.BATCH_SIZE]
-                ids = [f"{chunk['file_id']}_{batch_start + batch_index}" for batch_index, chunk in enumerate(batch)]
+                batch = chunks[batch_start : batch_start + self.BATCH_SIZE]
+                ids = [
+                    f"{chunk['file_id']}_{batch_start + batch_index}"
+                    for batch_index, chunk in enumerate(batch)
+                ]
                 documents = [chunk["text"] for chunk in batch]
                 metadatas = [
                     {
@@ -101,36 +111,52 @@ class IngestPipeline:
         url_match = re.search(r"\*\*Source URL:\*\*\s*(https?://\S+)", content)
         source_url = url_match.group(1).strip() if url_match else ""
 
-        return {"content": content, "file_id": file_id, "title": title, "source_url": source_url}
-    
+        return {
+            "content": content,
+            "file_id": file_id,
+            "title": title,
+            "source_url": source_url,
+        }
+
     def _chunk_file(self, article: dict) -> list[dict]:
         headers_to_split_on = [("#", "h1"), ("##", "h2"), ("###", "h3")]
-        md_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
-        char_splitter = RecursiveCharacterTextSplitter(chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap)
+        md_splitter = MarkdownHeaderTextSplitter(
+            headers_to_split_on=headers_to_split_on
+        )
+        char_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap
+        )
 
         md_chunks = md_splitter.split_text(article["content"])
         final_chunks = char_splitter.split_documents(md_chunks)
 
         chunks = []
         for doc in final_chunks:
-            section = " > ".join(filter(None, [
-                doc.metadata.get("h1"),
-                doc.metadata.get("h2"),
-                doc.metadata.get("h3"),
-            ]))
+            section = " > ".join(
+                filter(
+                    None,
+                    [
+                        doc.metadata.get("h1"),
+                        doc.metadata.get("h2"),
+                        doc.metadata.get("h3"),
+                    ],
+                )
+            )
             # Prefix chunk text with title + section for richer embeddings TODO: is this needed or does chroma handle it with metadata?
             prefix = article["title"]
             if section:
                 prefix = f"{prefix} > {section}"
             text = f"{prefix}\n\n{doc.page_content}"
 
-            chunks.append({
-                "text": text,
-                "file_id": article["file_id"],
-                "title": article["title"],
-                "source_url": article["source_url"],
-                "section": section,
-            })
+            chunks.append(
+                {
+                    "text": text,
+                    "file_id": article["file_id"],
+                    "title": article["title"],
+                    "source_url": article["source_url"],
+                    "section": section,
+                }
+            )
 
         return chunks
 
@@ -140,7 +166,9 @@ if __name__ == "__main__":
     setup_logging()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--force", action="store_true", help="Rebuild index from scratch")
+    parser.add_argument(
+        "--force", action="store_true", help="Rebuild index from scratch"
+    )
     args = parser.parse_args()
 
     pipeline = IngestPipeline()

@@ -1,4 +1,5 @@
 import logging
+
 import chainlit as cl
 from dotenv import load_dotenv
 
@@ -7,7 +8,7 @@ from logging_config import setup_logging
 load_dotenv()
 setup_logging()
 
-from agent import rewrite_query, retrieve, stream_answer
+from agent import retrieve, rewrite_query, stream_answer
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,13 @@ async def on_message(message: cl.Message):
     async with cl.Step(name="Retrieval") as step:
         chunks = retrieve(search_query)
         step.input = search_query
-        step.output = "\n\n".join(
-            f"[{c['title']}] (score: {c['score']})\n{c['source_url']}" for c in chunks
-        ) or "No chunks retrieved."
+        step.output = (
+            "\n\n".join(
+                f"[{c['title']}] (score: {c['score']})\n{c['source_url']}"
+                for c in chunks
+            )
+            or "No chunks retrieved."
+        )
 
     response = cl.Message(content="")
     await response.send()
