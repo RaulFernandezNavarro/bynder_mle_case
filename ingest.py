@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import logging
 import os
 import re
@@ -53,7 +54,6 @@ class IngestPipeline:
             )
             self.client.delete_collection(self.collection_name)
 
-        # Embedding funciton
         embedding_fn = OpenAIEmbeddingFunction(
             api_key=os.environ["OPENAI_API_KEY"],
             model_name=self.embedding_model,
@@ -66,9 +66,16 @@ class IngestPipeline:
             metadata={"hnsw:space": "cosine"},
         )
 
-        # TODO: ingest files that are not present in the collection
         file_paths = list(self.src_path.glob("*.md"))
-        logger.info(f"Found {len(file_paths)} files to ingest.")
+
+        if not force:
+            existing_ids = collection.get(include=[])["ids"]
+            indexed_file_ids = {cid.split("_")[0] for cid in existing_ids}
+            before = len(file_paths)
+            file_paths = [p for p in file_paths if p.stem.split("_")[0] not in indexed_file_ids]
+            logger.info(f"Found {len(file_paths)} new files to ingest (skipped {before - len(file_paths)} already indexed).")
+        else:
+            logger.info(f"Found {len(file_paths)} files to ingest.")
 
         chunks = []
         for path in file_paths:
@@ -82,10 +89,7 @@ class IngestPipeline:
         with logging_redirect_tqdm():
             for batch_start in tqdm(range(0, len(chunks), self.BATCH_SIZE)):
                 batch = chunks[batch_start : batch_start + self.BATCH_SIZE]
-                ids = [
-                    f"{chunk['file_id']}_{batch_start + batch_index}"
-                    for batch_index, chunk in enumerate(batch)
-                ]
+                ids = [self._chunk_id(chunk) for chunk in batch]
                 documents = [chunk["text"] for chunk in batch]
                 metadatas = [
                     {
@@ -96,9 +100,16 @@ class IngestPipeline:
                     }
                     for chunk in batch
                 ]
-                collection.add(ids=ids, documents=documents, metadatas=metadatas)
+                collection.upsert(ids=ids, documents=documents, metadatas=metadatas)
 
         logger.info("Ingestion completed.")
+
+    @staticmethod
+    def _chunk_id(chunk: dict) -> str:
+        content_hash = hashlib.md5(
+            f"{chunk['file_id']}_{chunk['section']}_{chunk['text'][:200]}".encode()
+        ).hexdigest()[:12]
+        return f"{chunk['file_id']}_{content_hash}"
 
     def _parse_file(self, path):
         content = path.read_text(encoding="utf-8")
