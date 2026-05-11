@@ -51,14 +51,13 @@ async def on_message(message: cl.Message):
             await response.send()
         await response.stream_token(full_response)
 
+    history.append({"role": "user", "content": message.content})
+    history.append({"role": "assistant", "content": full_response})
+    cl.user_session.set("history", history)
+
     if sources:
         citations = "\n".join(f"- [{title}]({url})" for title, url in sources.items())
         source_section = f"\n\n**Sources:**\n{citations}"
         await response.stream_token(source_section)
-        full_response += source_section
 
     await response.update()
-
-    history.append({"role": "user", "content": message.content})
-    history.append({"role": "assistant", "content": full_response})
-    cl.user_session.set("history", history)

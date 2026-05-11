@@ -20,6 +20,7 @@ from config import (
     CHUNK_SIZE,
     COLLECTION_NAME,
     EMBEDDING_MODEL,
+    INGEST_BATCH_SIZE,
     VECTOR_STORE_DIR,
 )
 from logging_config import setup_logging
@@ -43,11 +44,10 @@ class IngestPipeline:
         self.embedding_model = embedding_model
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
+        self.batch_size = INGEST_BATCH_SIZE
         self.client = chromadb.PersistentClient(path=self.dest_path)
-        self.BATCH_SIZE = 100
 
     def run(self, force=False):
-        # Delete collection if it already exists and force is True
         if force:
             logger.info(
                 f"Force is True. Deleting collection '{self.collection_name}' if it exists."
@@ -87,8 +87,8 @@ class IngestPipeline:
             f"Ingesting {len(chunks)} chunks into collection '{self.collection_name}'."
         )
         with logging_redirect_tqdm():
-            for batch_start in tqdm(range(0, len(chunks), self.BATCH_SIZE)):
-                batch = chunks[batch_start : batch_start + self.BATCH_SIZE]
+            for batch_start in tqdm(range(0, len(chunks), self.batch_size)):
+                batch = chunks[batch_start : batch_start + self.batch_size]
                 ids = [self._chunk_id(chunk) for chunk in batch]
                 documents = [chunk["text"] for chunk in batch]
                 metadatas = [
@@ -153,7 +153,6 @@ class IngestPipeline:
                     ],
                 )
             )
-            # Prefix chunk text with title + section for richer embeddings TODO: is this needed or does chroma handle it with metadata?
             prefix = article["title"]
             if section:
                 prefix = f"{prefix} > {section}"

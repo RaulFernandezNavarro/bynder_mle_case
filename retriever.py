@@ -107,8 +107,8 @@ class Retriever:
                 continue
             seen_titles[title] = count + 1
 
-            similarity = semantic_scores.get(doc_id, 0.0)
-            if similarity < CHUNK_SCORE_THRESHOLD:
+            similarity = semantic_scores.get(doc_id)
+            if similarity is not None and similarity < CHUNK_SCORE_THRESHOLD:
                 continue
 
             chunks.append({
@@ -116,7 +116,7 @@ class Retriever:
                 "title": title,
                 "source_url": metadata["source_url"],
                 "section": metadata["section"],
-                "score": round(similarity, 4),
+                "score": round(rrf_scores[doc_id], 4),
             })
 
             if len(chunks) == self.top_k:
